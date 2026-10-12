@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>How I made an animated carousel with Claude Code · 2ONO Lab</title>
-<meta name="description" content="No After Effects. Claude Code, HyperFrames and ffmpeg, running locally: seamless 8-second looping slides, a step-by-step guide with prompts you can paste.">
+<meta name="description" content="No After Effects. The Claude app with Claude Code, HyperFrames and ffmpeg, on your own computer: seamless 8-second looping slides, a step-by-step guide with prompts you can paste.">
 <meta property="og:title" content="How I made an animated carousel with Claude Code (no After Effects)">
-<meta property="og:description" content="Seamless 8-second looping slides with Claude Code, HyperFrames and ffmpeg. A step-by-step guide with copyable prompts.">
+<meta property="og:description" content="Seamless 8-second looping slides with the Claude app, HyperFrames and ffmpeg. A step-by-step guide with copyable prompts.">
 <meta property="og:type" content="article">
 <meta name="theme-color" content="#0B0A09">
 <!-- TODO: <meta property="og:image" content="https://2onofilms.github.io/lab/assets/media/claude-code-carousel/og.jpg"> (1200x630) -->
@@ -25,18 +25,19 @@
     <div class="tut-head">
       <div class="meta"><span class="label">Tutorial</span><span class="label">Claude Code <b>·</b> HyperFrames <b>·</b> ffmpeg</span></div>
       <h1>How I made an animated carousel with Claude Code <span class="acc">(no After Effects)</span></h1>
-      <p class="lede">Eight slides, each one an 8-second video that loops without a visible cut. Everything runs on my own computer. Here is the full guide, step by step.</p>
+      <p class="lede">Eight slides, each one an 8-second video that loops without a visible cut. You work in the Claude desktop app, in the Code tab, and just type prompts. No terminal needed. Here is the full guide, step by step.</p>
 
       <nav class="toc" aria-label="Contents">
         <span class="label">In this tutorial</span>
         <ol>
           <li><a href="#make">What you'll make</a></li>
           <li><a href="#tools">Tools you need</a></li>
-          <li><a href="#s1">Step 1 · Install and create the project</a></li>
+          <li><a href="#s1">Step 1 · Get the Claude app and set up</a></li>
           <li><a href="#s2">Step 2 · Create your design system</a></li>
           <li><a href="#s3">Step 3 · Build the slides</a></li>
           <li><a href="#s4">Step 4 · Render and post</a></li>
           <li><a href="#tips">Tips (optional)</a></li>
+          <li><a href="#term">Prefer the terminal?</a></li>
           <li><a href="#fix">Troubleshooting</a></li>
         </ol>
       </nav>
@@ -45,7 +46,7 @@
     <!-- TODO: replace with the real slide videos. Put files in lab/assets/media/claude-code-carousel/ -->
     <span class="step-n" id="make">00</span>
     <h2>What you'll make</h2>
-    <p>Eight slides for an Instagram carousel, each one an 8-second looping video, made by typing prompts in Claude Code. No After Effects, nothing to draw by hand.</p>
+    <p>Eight slides for an Instagram carousel, each one an 8-second looping video, made by typing prompts in the Code tab of the Claude app. No After Effects, nothing to draw by hand.</p>
     <div class="media">
       <figure>
         <video autoplay muted loop playsinline preload="metadata" src="../../assets/media/claude-code-carousel/01.mp4"></video>
@@ -62,45 +63,36 @@
     <div class="tablewrap">
       <table>
         <tr><th>Tool</th><th>What it is</th><th>Get it</th></tr>
-        <tr><td><strong>Claude Code</strong></td><td>The AI that writes the project. Needs a Claude Pro plan or higher.</td><td><a href="https://code.claude.com/docs/en/setup">code.claude.com/docs/en/setup</a></td></tr>
+        <tr><td><strong>Claude app</strong></td><td>The desktop app (Mac and Windows) with the Code tab, where Claude writes and runs the project. Needs a paid Claude plan (Pro or higher).</td><td><a href="https://claude.com/download">claude.com/download</a></td></tr>
         <tr><td><strong>Node.js 22+</strong></td><td>Runs HyperFrames. Download the LTS version.</td><td><a href="https://nodejs.org">nodejs.org</a></td></tr>
         <tr><td><strong>FFmpeg</strong></td><td>Video encoder. Windows: <code>winget install ffmpeg</code>. Mac: <code>brew install ffmpeg</code>.</td><td><a href="https://ffmpeg.org/download.html">ffmpeg.org/download.html</a></td></tr>
-        <tr><td><strong>HyperFrames</strong></td><td>Free, Apache-2.0. Runs through npx and gets its own Chrome.</td><td><a href="https://github.com/heygen-com/hyperframes">github.com/heygen-com/hyperframes</a></td></tr>
+        <tr><td><strong>HyperFrames</strong></td><td>Free, Apache-2.0. Runs through npx and gets its own Chrome. Claude sets it up for you.</td><td><a href="https://github.com/heygen-com/hyperframes">github.com/heygen-com/hyperframes</a></td></tr>
       </table>
     </div>
     <h3>Check it's installed</h3>
-    <p>Open a terminal (PowerShell on Windows, Terminal on Mac) and run these. Each should print a version number.</p>
+    <p>Claude can check this for you. You'll paste this prompt in step 1, so there's nothing to run by hand.</p>
     <div class="code">
-      <div class="top"><span>Terminal · check</span><button type="button">Copy</button></div>
-<pre>node -v
-ffmpeg -version
-claude --version</pre>
+      <div class="top"><span>Prompt · check tools</span><button type="button">Copy</button></div>
+<pre>Check that Node.js 22+ and FFmpeg are installed, and tell me how to install anything missing.</pre>
     </div>
 
     <span class="step-n" id="s1">01</span>
-    <h2>Install and create the project</h2>
-    <p>Install Claude Code. Mac, Linux or WSL:</p>
+    <h2>Get the Claude app and set up</h2>
+    <ol>
+      <li>Download the Claude app from <a href="https://claude.com/download">claude.com/download</a> (Mac or Windows) and sign in with your Claude account.</li>
+      <li>Click the <strong>Code</strong> tab at the top of the app.</li>
+      <li>Choose an empty folder for your project (create a new one, for example <code>my-carousel</code>).</li>
+      <li>Paste this prompt in the chat:</li>
+    </ol>
     <div class="code">
-      <div class="top"><span>Terminal · Mac / Linux / WSL</span><button type="button">Copy</button></div>
-<pre>curl -fsSL https://claude.ai/install.sh | bash</pre>
+      <div class="top"><span>Prompt · setup</span><button type="button">Copy</button></div>
+<pre>Set up a new HyperFrames project here and check that Node.js 22+ and FFmpeg are installed.</pre>
     </div>
-    <p>Windows PowerShell:</p>
-    <div class="code">
-      <div class="top"><span>Terminal · Windows PowerShell</span><button type="button">Copy</button></div>
-<pre>irm https://claude.ai/install.ps1 | iex</pre>
-    </div>
-    <p>Then create the project and start Claude Code inside it:</p>
-    <div class="code">
-      <div class="top"><span>Terminal · project</span><button type="button">Copy</button></div>
-<pre>npx hyperframes init my-carousel
-cd my-carousel
-claude</pre>
-    </div>
-    <div class="callout">First run: Claude Code opens your browser so you can log in once. After that it stays logged in.</div>
+    <div class="callout">Claude may ask permission to run commands or install things. Read what it wants to do, then allow it. If Node.js or FFmpeg are missing, it tells you how to install them (see the table above).</div>
 
     <span class="step-n" id="s2">02</span>
     <h2>Create YOUR design system</h2>
-    <p>Type this prompt in Claude Code, in the terminal. It asks you 5 questions and saves your answers as <code>design.md</code>, so all 8 slides look like one piece.</p>
+    <p>Paste this prompt in the Code tab. It asks you 5 questions and saves your answers as <code>design.md</code>, so all 8 slides look like one piece.</p>
     <div class="code">
       <div class="top"><span>Prompt · design system</span><button type="button">Copy</button></div>
 <pre>Before any slide, help me create my design system. Ask me 5 questions (mood, audience, colours, fonts, references), then save the answers as design.md. Every slide must follow it.</pre>
@@ -108,15 +100,15 @@ claude</pre>
 
     <span class="step-n" id="s3">03</span>
     <h2>Build the slides</h2>
-    <p>Replace <code>[topic]</code> with your subject and paste it into Claude Code.</p>
+    <p>Replace <code>[topic]</code> with your subject and paste it in the Code tab.</p>
     <div class="code">
       <div class="top"><span>Prompt · build 8 slides</span><button type="button">Copy</button></div>
 <pre>Now build 8 slides about [topic] as HyperFrames compositions in this project, one HTML file per slide, following design.md. Slide 1 a hook under 10 words, slides 2-6 one step each, slide 7 a call to action, slide 8 a recap. Each slide an 8-second loop, text readable from the first frame.</pre>
     </div>
-    <p><strong>You'll get:</strong> 8 HTML files in your project. To see them, run this in a second terminal (inside <code>my-carousel</code>) and open the address it prints:</p>
+    <p><strong>You'll get:</strong> 8 HTML files in your project. Claude writes them, you don't. To see them, ask:</p>
     <div class="code">
-      <div class="top"><span>Terminal · preview</span><button type="button">Copy</button></div>
-<pre>npx hyperframes preview</pre>
+      <div class="top"><span>Prompt · preview</span><button type="button">Copy</button></div>
+<pre>Open a preview in my browser.</pre>
     </div>
     <h3>Change things by asking</h3>
     <p>You never edit code. Just tell Claude what to change:</p>
@@ -140,12 +132,7 @@ claude</pre>
       <div class="top"><span>Prompt · render</span><button type="button">Copy</button></div>
 <pre>Render all 8 slides to MP4 into a folder called export.</pre>
     </div>
-    <p>Manual option, one slide at a time (repeat for each slide):</p>
-    <div class="code">
-      <div class="top"><span>Terminal · render one slide</span><button type="button">Copy</button></div>
-<pre>npx hyperframes render -c compositions/slide-1.html -o export/slide-1.mp4</pre>
-    </div>
-    <p>Your videos are in <code>my-carousel/export/</code>. To post: open Instagram, tap New post, select the 8 videos in order. The first frame of the first video is the cover.</p>
+    <p>Your videos land in the <code>export</code> folder inside your project. To post: open Instagram, tap New post, select the 8 videos in order. The first frame of the first video is the cover.</p>
 
     <span class="step-n" id="tips">05</span>
     <h2>Tips (optional)</h2>
@@ -160,13 +147,47 @@ claude</pre>
     <span class="step-n" id="fix">06</span>
     <h2>Troubleshooting</h2>
     <ul>
-      <li><strong>"command not found: claude" (or node).</strong> Close the terminal and open a new one. If it still fails, check that the install folder is in your PATH.</li>
-      <li><strong>Node version too old.</strong> Run <code>node -v</code>. If it is below 22, install the current LTS from nodejs.org and restart the terminal.</li>
-      <li><strong>ffmpeg not found.</strong> Install it (<code>winget install ffmpeg</code> on Windows, <code>brew install ffmpeg</code> on Mac), then restart the terminal and run <code>ffmpeg -version</code>.</li>
-      <li><strong>Preview is blank or render fails.</strong> Ask Claude: "Run <code>npx hyperframes doctor</code> and fix what it reports."</li>
+      <li><strong>Claude answers with text instead of files.</strong> Tell it: "Write the files in this project folder." Make sure you picked a folder in the Code tab.</li>
+      <li><strong>Node or FFmpeg missing.</strong> Ask Claude: "Check that Node.js 22+ and FFmpeg are installed, and tell me how to install anything missing." Install what it lists (links in the table above), restart the Claude app, and ask again.</li>
+      <li><strong>Preview is blank or render fails.</strong> Ask Claude: "Run <code>npx hyperframes doctor</code> and fix what it reports", then "Open a preview in my browser."</li>
       <li><strong>Videos too big to upload.</strong> Ask Claude: "Re-render the slides smaller, under 30 MB each."</li>
-      <li><strong>Claude replies with text instead of files.</strong> Tell it: "write the files in this project".</li>
     </ul>
+
+    <span class="step-n" id="term">07</span>
+    <h2>Prefer the terminal?</h2>
+    <details style="border:1px solid rgba(143,136,126,0.4);padding:14px 18px;margin:0 0 24px">
+      <summary style="cursor:pointer;font-weight:600">Show the terminal commands (optional)</summary>
+      <p style="margin-top:14px">Everything above also works with the Claude Code command line. Install it (Mac, Linux or WSL):</p>
+      <div class="code">
+      <div class="top"><span>Terminal · Mac / Linux / WSL</span><button type="button">Copy</button></div>
+<pre>curl -fsSL https://claude.ai/install.sh | bash</pre>
+    </div>
+      <p>Windows PowerShell:</p>
+      <div class="code">
+      <div class="top"><span>Terminal · Windows PowerShell</span><button type="button">Copy</button></div>
+<pre>irm https://claude.ai/install.ps1 | iex</pre>
+    </div>
+      <p>Create the project and start Claude Code inside it (it asks you to log in once, in your browser):</p>
+      <div class="code">
+      <div class="top"><span>Terminal · project</span><button type="button">Copy</button></div>
+<pre>npx hyperframes init my-carousel
+cd my-carousel
+claude</pre>
+    </div>
+      <p>Check the tools:</p>
+      <div class="code">
+      <div class="top"><span>Terminal · check</span><button type="button">Copy</button></div>
+<pre>node -v
+ffmpeg -version
+claude --version</pre>
+    </div>
+      <p>Preview and render one slide by hand:</p>
+      <div class="code">
+      <div class="top"><span>Terminal · preview and render</span><button type="button">Copy</button></div>
+<pre>npx hyperframes preview
+npx hyperframes render -c compositions/slide-1.html -o export/slide-1.mp4</pre>
+    </div>
+    </details>
 
     <div class="disclosure">
       <span class="label">Disclosure</span>
