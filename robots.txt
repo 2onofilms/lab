@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+# TODO: add "Sitemap: https://2onofilms.github.io/lab/sitemap.xml" if you create one.

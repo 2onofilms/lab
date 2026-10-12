@@ -1,0 +1,2 @@
+Self-hosted (OFL): Anton, Instrument Serif Italic, JetBrains Mono (latin subset). See OFL.txt.
+NOT in this repo: Switzer (Indian Type Foundry, ITF FFL). It is loaded from the Fontshare CSS API; its licence does not allow redistributing the files in a public repo.

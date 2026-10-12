@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How I made an animated carousel with Claude Code · 2ONO Lab</title>
+<meta name="description" content="No After Effects. Claude Code, HyperFrames and ffmpeg, running locally: seamless 8-second looping slides, the rules and the prompts you can paste.">
+<meta property="og:title" content="How I made an animated carousel with Claude Code (no After Effects)">
+<meta property="og:description" content="Seamless 8-second looping slides with Claude Code, HyperFrames and ffmpeg. The rules, the render settings and copyable prompts.">
+<meta property="og:type" content="article">
+<meta name="theme-color" content="#0B0A09">
+<!-- TODO: <meta property="og:image" content="https://2onofilms.github.io/lab/assets/media/claude-code-carousel/og.jpg"> (1200x630) -->
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="bar">
+    <a class="brand" href="../../"><i></i>2ONO Lab</a>
+    <a class="ig" href="https://instagram.com/2onofilms">@2onofilms</a>
+  </header>
+
+  <article>
+    <div class="tut-head">
+      <div class="meta"><span class="label">Tutorial</span><span class="label">Claude Code <b>·</b> HyperFrames <b>·</b> ffmpeg</span></div>
+      <h1>How I made an animated carousel with Claude Code <span class="acc">(no After Effects)</span></h1>
+      <p class="lede">Eight slides, each one an 8-second video that loops without a visible cut. Everything runs on my own computer. Here is the method, the rules and the prompts.</p>
+
+      <nav class="toc" aria-label="Contents">
+        <span class="label">In this tutorial</span>
+        <ol>
+          <li><a href="#stack">The stack</a></li>
+          <li><a href="#system">The brief and the design system</a></li>
+          <li><a href="#storyboard">Storyboard first</a></li>
+          <li><a href="#loop">One slide as a seamless loop</a></li>
+          <li><a href="#render">Rendering and motion blur</a></li>
+          <li><a href="#seam">Checking the loop seam</a></li>
+          <li><a href="#export">Export settings for Instagram</a></li>
+          <li><a href="#prompts">Prompts you can paste</a></li>
+        </ol>
+      </nav>
+    </div>
+
+    <!-- TODO: replace with the real slide videos. Put files in lab/assets/media/claude-code-carousel/ -->
+    <div class="media">
+      <figure>
+        <video autoplay muted loop playsinline preload="metadata" src="../../assets/media/claude-code-carousel/01.mp4"></video>
+        <figcaption>Slide 01 · the cover, looping.</figcaption>
+      </figure>
+      <figure>
+        <video autoplay muted loop playsinline preload="metadata" src="../../assets/media/claude-code-carousel/03.mp4"></video>
+        <figcaption>Slide 03 · same system, different slide.</figcaption>
+      </figure>
+    </div>
+
+    <span class="step-n" id="stack">01</span>
+    <h2>The stack</h2>
+    <p>Three tools, all local. No cloud editor, no subscription for the animation itself.</p>
+    <ul>
+      <li><strong>Claude Code</strong> writes and edits the project from my instructions.</li>
+      <li><strong>HyperFrames</strong> is the renderer. A slide is an HTML file, the motion is GSAP, and the output is video frames.</li>
+      <li><strong>ffmpeg</strong> turns the frames into the final MP4 and does the motion blur.</li>
+    </ul>
+    <p>The idea is simple: a slide is code. Code can be repeated, checked and fixed with a sentence, and a fixed design system keeps eight slides looking like one piece.</p>
+
+    <span class="step-n" id="system">02</span>
+    <h2>The brief and the design system</h2>
+    <p>Before any animation I write a short brief and I lock a design system: colours, fonts, spacing, how a title looks, how a label looks. Then every slide is built from the same parts.</p>
+    <p>Why fixed? Because Claude Code is fast and happy to improvise, and improvisation across eight slides gives you eight different looks. A system turns "make it nice" into "use these tokens". Mine is a small set: two background themes, one accent colour, three type families (title, text, accent) and a mono font for labels.</p>
+    <div class="callout">The system lives in files the model reads every time: a tokens file and a short rules document. If a rule is not written down, it will drift.</div>
+
+    <span class="step-n" id="storyboard">03</span>
+    <h2>Storyboard first</h2>
+    <p>I never animate first. I ask for the whole carousel as static frames: for each slide, the text, the layout and one idea of what will move. I approve or change it in words. Only then does motion start.</p>
+    <p>It is cheaper to change a sentence than a render, and it keeps the story clean: one point per slide, a cover that makes you stop, a last slide that tells you what to do.</p>
+
+    <span class="step-n" id="loop">04</span>
+    <h2>Building one slide as an 8-second seamless loop</h2>
+    <p>Instagram repeats the videos inside a carousel. If your text slides in, people will watch it disappear and slide in again, every few seconds, while they read. So the rules are:</p>
+    <ol>
+      <li><strong>All text is static from frame 0.</strong> No entrances, no fades, no drift. The slide is readable the instant it appears.</li>
+      <li><strong>Only the ambient layer moves</strong>: glows, particles, a perspective grid, a cursor, bars that breathe.</li>
+      <li><strong>Every moving value is periodic.</strong> The slide lasts exactly 8.00 s, and each animated value repeats with a period that divides 8 s (8, 4, 2 s and so on).</li>
+    </ol>
+    <p>In practice that means sine and cosine of <code>2&pi;t/T</code>, closed orbits (circle, ellipse, figure eight), particles that travel a whole number of laps with a fade at the edges, and a "playhead" that goes and returns with a cosine instead of running once. The animation is a pure function of time, so frame 480 would be identical to frame 0.</p>
+    <p>Things I ban because they never close the loop: light sweeps and reflections that cross the slide, one-time events, values that accumulate, and a scanline made from a repeated gradient shifted by fractions of a pixel (it does not come back identical).</p>
+
+    <div class="code nowrap">
+      <div class="top"><span>The idea in GSAP-style code</span><button type="button">Copy</button></div>
+<pre>// t is time in seconds, LOOP = 8
+const LOOP = 8;
+const phase = (t, n) =&gt; (2 * Math.PI * t * n) / LOOP;   // n laps per loop
+
+// glow drifting on a closed ellipse, 1 lap per loop
+glow.x = cx + 40 * Math.cos(phase(t, 1));
+glow.y = cy + 24 * Math.sin(phase(t, 1));
+
+// "breathing" bar, 2 cycles per loop (period 4 s)
+bar.scaleY = 1 + 0.03 * Math.sin(phase(t, 2));
+
+// playhead that goes and returns, never jumps
+head.x = x0 + (x1 - x0) * (0.5 - 0.5 * Math.cos(phase(t, 1)));</pre>
+    </div>
+
+    <span class="step-n" id="render">05</span>
+    <h2>Rendering and motion blur</h2>
+    <p>Motion that is perfectly smooth on a computer can look a bit digital on a phone. I get a filmic feel with real motion blur, not a blur filter:</p>
+    <ol>
+      <li>Render the slide at <strong>240 fps</strong>, so there are 4 sub-frames for every output frame at 60 fps.</li>
+      <li>Average the sub-frames with ffmpeg's <code>tmix</code>, then keep one frame out of four. That gives 60 fps with a natural shutter blur.</li>
+      <li>8 s at 60 fps is 480 frames. The text is static, so it stays razor sharp. Only the moving things blur.</li>
+    </ol>
+    <p>The loop needs one extra care: the blur window at the seam must not fall off the end of the video. Because everything is periodic, the sub-frames after the last one are the same as the first ones, so the average wraps around modulo 8 s. In my render script that is a <code>loop: 8</code> option. Film grain is part of the same logic: it changes at 24 fps over 8 plates and is phased so frames 479 and 0 share the same plate.</p>
+    <div class="code nowrap">
+      <div class="top"><span>ffmpeg · the blur step (sketch)</span><button type="button">Copy</button></div>
+<pre># frames-240/ holds 1920 PNG frames (8 s at 240 fps)
+ffmpeg -framerate 240 -i frames-240/%04d.png \
+  -vf "tmix=frames=4,select='not(mod(n\,4))',setpts=N/60/TB" \
+  -r 60 frames-60/%04d.png
+# for a seamless loop, prepend the last 3 sub-frames before tmix
+# so the seam frames are blurred like every other frame</pre>
+    </div>
+    <p class="note">This is the idea, not a drop-in script. Ask Claude Code to build it for your project and to handle the wrap at the seam.</p>
+
+    <span class="step-n" id="seam">06</span>
+    <h2>Checking the loop seam</h2>
+    <p>Do not trust your eyes at 100%. Measure it. The method I use:</p>
+    <ol>
+      <li>Scale the video to 540 px wide and take the luma only.</li>
+      <li>Compute the mean absolute difference between every pair of consecutive frames.</li>
+      <li>Compare the seam (frame 479 to frame 0) with the normal steps. The seam should look like any other step.</li>
+    </ol>
+    <p>On my test slides the seam measured 0.55 to 0.59, against a p90 of 0.60 to 0.70 for the normal steps. It sat below the p90 on all eight.</p>
+    <p>The check found three real problems, all invisible in a quick preview:</p>
+    <ul>
+      <li>A scanline made with a shifted gradient did not return identically.</li>
+      <li>The grain changed plate exactly on the seam.</li>
+      <li>Encoding: the first frame is a keyframe, and at a lower quality it was sharper than the end of the chain of predicted frames, which made the seam twice as big.</li>
+    </ul>
+
+    <span class="step-n" id="export">07</span>
+    <h2>Export settings for Instagram</h2>
+    <div class="tablewrap">
+      <table>
+        <tr><th>Setting</th><th>Value</th></tr>
+        <tr><td>Size</td><td>1080 x 1350 (4:5)</td></tr>
+        <tr><td>Frame rate</td><td>60 fps</td></tr>
+        <tr><td>Length</td><td>8.00 s = 480 frames</td></tr>
+        <tr><td>Codec</td><td>H.264 High, CRF 8, <code>-tune grain</code></td></tr>
+        <tr><td>Keyframes</td><td>One only (<code>keyint 480</code>, <code>scenecut 0</code>)</td></tr>
+        <tr><td>Master</td><td>Lossless (qp 0, yuv444), then encode the delivery file from it</td></tr>
+        <tr><td>Audio</td><td>Silent AAC track</td></tr>
+      </table>
+    </div>
+    <div class="code nowrap">
+      <div class="top"><span>ffmpeg · delivery file</span><button type="button">Copy</button></div>
+<pre>ffmpeg -framerate 60 -i frames-60/%04d.png \
+  -f lavfi -i anullsrc=r=44100:cl=stereo -shortest \
+  -c:v libx264 -profile:v high -preset slow -crf 8 -tune grain \
+  -x264-params keyint=480:min-keyint=480:scenecut=0 \
+  -pix_fmt yuv420p -colorspace bt709 -color_primaries bt709 -color_trc bt709 \
+  -c:a aac -movflags +faststart slide-01.mp4</pre>
+    </div>
+    <p><strong>Heads up:</strong> these files are heavy, 28 to 46 MB for 8 seconds in my case. I keep CRF low on purpose to keep the seam clean; at CRF 16 the seam got visibly worse in my tests. Instagram recompresses the file anyway.</p>
+
+    <span class="step-n" id="prompts">08</span>
+    <h2>Prompts you can paste</h2>
+    <p>These are cleaned-up, generic versions of the rules I give Claude Code. Adapt the names and numbers to your project.</p>
+
+    <h3>A. Set up the project and lock the system</h3>
+    <div class="code">
+      <div class="top"><span>Prompt · design system</span><button type="button">Copy</button></div>
+<pre>We are building an Instagram carousel as a set of looping videos, rendered locally with HyperFrames (HTML + GSAP) and ffmpeg.
+
+Before writing any slide, create two files:
+1. tokens.json: background themes (dark and light), text colours, one accent colour, three font families (title, body, accent) and one mono font for labels, plus spacing and type sizes.
+2. RULES.md: a short list of design rules for this carousel.
+
+Hard rules for RULES.md:
+- Every slide is 1080x1350 (4:5).
+- Use only the tokens. Never invent colours, fonts or sizes.
+- Max 3 type families in the content.
+- One idea per slide. Short declarative sentences.
+- Text is plain and readable. No decorative effects behind small text.
+
+Read both files at the start of every task and tell me if a request breaks a rule.</pre>
+    </div>
+
+    <h3>B. Storyboard before motion</h3>
+    <div class="code">
+      <div class="top"><span>Prompt · storyboard</span><button type="button">Copy</button></div>
+<pre>Topic: [YOUR TOPIC]. Slides: [N].
+
+Do not animate yet. Produce a storyboard: for each slide give the exact text, the layout (which tokens, where), and in one line what ambient motion it will have later.
+Slide 1 is a cover that makes people stop. The last slide tells people what to do next.
+Then build the static version of every slide as HTML using the design system, so I can approve the look first. Wait for my OK before adding motion.</pre>
+    </div>
+
+    <h3>C. Build a seamless looping slide</h3>
+    <div class="code">
+      <div class="top"><span>Prompt · loop rules</span><button type="button">Copy</button></div>
+<pre>Add motion to slide [NN]. It must be a seamless 8.00 s loop (480 frames at 60 fps), because Instagram repeats carousel videos.
+
+Rules:
+- All text, data, windows, code and lists are complete and fully static from frame 0. No entry animations, no fades, no drift. 0 px of movement on any text.
+- Every animated value is a pure function of time with a period that divides 8 s: sin/cos of 2*pi*t/T with T = 8/n. The value at t = 8 s must equal the value at t = 0, speed included.
+- Use closed paths only: circles, ellipses, figure eights, Lissajous curves. Particles either orbit a fixed point or travel a whole number of laps with a fade near the edges.
+- Pulses and cursors: a whole number of cycles per loop, and visible at frame 0.
+- A playhead or progress marker goes and returns with a cosine. It never runs once and jumps back.
+- Film grain: change plates at 24 fps over 8 plates, phased so the last frame and the first frame use the same plate.
+- Forbidden: light sweeps or reflections crossing the slide, one-time events, accumulating motion, a scanline made of a repeated gradient shifted by fractions of a pixel.
+- Ambient motion only: glow, particles, perspective grid, breathing bars, cursor, small parallax on a closed ellipse.
+
+Build the timeline as a single paused GSAP timeline that can be seeked to any time and always gives the same frame. Then render frames 0, 120, 240, 360 and 479 as a contact sheet and show it to me.</pre>
+    </div>
+
+    <h3>D. Render with motion blur and check the seam</h3>
+    <div class="code">
+      <div class="top"><span>Prompt · render and verify</span><button type="button">Copy</button></div>
+<pre>Write a render script for the looping slides.
+
+1. Render each slide at 240 fps for 8 s (1920 frames).
+2. Apply motion blur by averaging 4 sub-frames per output frame (ffmpeg tmix), then output 60 fps. Because the animation is periodic, wrap the averaging window modulo 8 s so the seam frames are blurred the same way as every other frame.
+3. Save a lossless master (qp 0, yuv444), then encode the delivery file from it: H.264 High, 1080x1350, 60 fps, CRF 8, -tune grain, a single keyframe (keyint 480, min-keyint 480, scenecut 0), yuv420p, BT.709 tags, a silent AAC track, +faststart.
+4. Save the first sharp sub-frame of each slide as a PNG.
+
+Then write a seam checker: scale each video to 540 px wide, use luma only, compute the mean absolute difference between consecutive frames, and report the median, p90 and max of the normal steps next to the seam (frame 479 to frame 0). Tell me if the seam is above the p90 of the normal steps, and find the cause before changing anything.</pre>
+    </div>
+
+    <div class="disclosure">
+      <span class="label">Disclosure</span>
+      <p style="margin-top:8px"><strong>I use Claude in my workflow. Not sponsored.</strong></p>
+    </div>
+
+    <div class="cta">
+      <h2>Want <span class="acc">more like this?</span></h2>
+      <p>I post the short version on Instagram and put the full method, prompts and files here.</p>
+      <a class="btn" href="https://instagram.com/2onofilms">Follow @2onofilms</a>
+      <p class="note" style="margin-top:18px"><a href="../../">&larr; All tutorials</a></p>
+    </div>
+  </article>
+</div>
+<script src="../../assets/site.js"></script>
+</body>
+</html>
